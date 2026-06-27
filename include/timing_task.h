@@ -30,10 +30,10 @@ extern "C"
  *===========================================================================*/
 
 /** @brief 定时器句柄（不透明指针） */
-typedef struct _TIMER_ TIMER;
+typedef struct _TIMING_ TIMING;
 
 /** @brief 定时任务句柄（不透明指针，用于取消任务） */
-typedef struct _TIMER_TASK_ TIMER_TASK;
+typedef struct _TIMING_TASK_ TIMING_TASK;
 
 /** @brief 定时任务回调 */
 typedef void (*timer_cb_t)(void *arg);
@@ -51,7 +51,7 @@ typedef void (*timer_cb_t)(void *arg);
  * @param[in] num_threads  线程池工作线程数，必须 >= 1
  * @return 成功返回定时器指针，失败返回 NULL
  */
-TIMER *timing_create(uint32_t interval_ms, int32_t num_threads);
+TIMING *timing_create(uint32_t interval_ms, int32_t num_threads);
 
 /**
  * @brief 销毁定时器，释放所有资源
@@ -60,7 +60,7 @@ TIMER *timing_create(uint32_t interval_ms, int32_t num_threads);
  *
  * @param[in] t 定时器指针，传 NULL 无操作
  */
-void timing_destroy(TIMER *t);
+void timing_destroy(TIMING *t);
 
 /**
  * @brief 启动事件循环（阻塞）
@@ -71,7 +71,7 @@ void timing_destroy(TIMER *t);
  * @param[in] t 定时器指针
  * @return 正常退出返回 0，出错返回 -1
  */
-int32_t timing_run(TIMER *t);
+int32_t timing_run(TIMING *t);
 
 /**
  * @brief 停止事件循环
@@ -81,7 +81,7 @@ int32_t timing_run(TIMER *t);
  * @param[in] t 定时器指针
  * @return 成功返回 0，t 为 NULL 返回 -1
  */
-int32_t timing_stop(TIMER *t);
+int32_t timing_stop(TIMING *t);
 
 /*===========================================================================
  * 定时任务操作
@@ -99,7 +99,7 @@ int32_t timing_stop(TIMER *t);
  *
  * @return 成功返回任务句柄（可用于 timing_cancel），失败返回 NULL
  */
-TIMER_TASK *timing_add(TIMER     *t,
+TIMING_TASK *timing_add(TIMING     *t,
                        uint32_t   first_delay_ms,
                        uint32_t   period_ms,
                        int32_t    count,
@@ -115,7 +115,7 @@ TIMER_TASK *timing_add(TIMER     *t,
  * @param[in] task 任务句柄
  * @return 成功返回 0，task 为 NULL 或已取消返回 -1
  */
-int32_t timing_cancel(TIMER_TASK *task);
+int32_t timing_cancel(TIMING_TASK *task);
 
 #ifdef __cplusplus
 }

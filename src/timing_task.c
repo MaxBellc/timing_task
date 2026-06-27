@@ -36,7 +36,7 @@
  * @brief 回调派发上下文
  *
  * 在 thread_pool_submit 时分配，dispatch_cb 中释放。
- * 独立于 TIMER_TASK，task 释放后 ctx 仍可安全访问。
+ * 独立于 TIMING_TASK，task 释放后 ctx 仍可安全访问。
  */
 typedef struct _DISPATCH_CTX_
 {
@@ -52,32 +52,32 @@ typedef struct _DISPATCH_CTX_
  *
  * 字段按 8→4→1 字节排序，尾部 _res[3] 补齐 4 字节对齐。
  */
-typedef struct _TIMER_TASK_
+typedef struct _TIMING_TASK_
 {
     uint64_t   next_ms;       /**< 下次触发的 CLOCK_MONOTONIC 毫秒时间 */
     timer_cb_t cb;            /**< 回调函数指针 */
     void      *arg;           /**< 用户上下文指针 */
     LIST_NODE *list_node;     /**< 在链表中的节点，NULL = 已取出 */
-    TIMER     *timer;         /**< 所属定时器 */
+    TIMING     *timer;         /**< 所属定时器 */
     uint32_t   period_ms;     /**< 触发后 next_ms 递增的量 */
     int32_t    count;         /**< 剩余执行次数，-1=永久 */
     int8_t     cancelled;     /**< 取消标记 */
     uint8_t    _res[3];       /**< 对齐保留 */
-} TIMER_TASK;
+} TIMING_TASK;
 
 /**
  * @brief 定时器
  *
  * 持有任务链表、事件循环状态以及内部线程池。
  */
-typedef struct _TIMER_
+typedef struct _TIMING_
 {
-    LIST_HEAD  *task_list;       /**< linkedList，存放 TIMER_TASK * */
+    LIST_HEAD  *task_list;       /**< linkedList，存放 TIMING_TASK * */
     THREAD_POOL *pool;           /**< 内部线程池，用于异步执行回调 */
     uint32_t    interval_ms;     /**< select timeout，也是到期检查精度 */
     int8_t      running;         /**< 事件循环运行标志，非 0 表示运行中 */
     uint8_t     _res[3];         /**< 对齐保留 */
-} TIMER;
+} TIMING;
 
 /*===========================================================================
  * 时间工具
@@ -125,19 +125,19 @@ static void dispatch_cb(void *arg)
  *
  * @param[in] t 定时器指针
  */
-static void fire_expired_tasks(TIMER *t)
+static void fire_expired_tasks(TIMING *t)
 {
     uint64_t    now  = now_ms();
     LIST_NODE  *node = NULL;
     LIST_NODE  *next = NULL;
-    TIMER_TASK *task = NULL;
+    TIMING_TASK *task = NULL;
 
     node = t->task_list->first;
 
     while (NULL != node)
     {
         next = node->next;
-        task = (TIMER_TASK *) node->data;
+        task = (TIMING_TASK *) node->data;
 
         if ((NULL != task)
             && (0 == task->cancelled)
@@ -199,22 +199,22 @@ static void fire_expired_tasks(TIMER *t)
 /**
  * @brief 创建定时器
  *
- * 分配 TIMER 结构体，创建 linkedList 和内部线程池。
+ * 分配 TIMING 结构体，创建 linkedList 和内部线程池。
  *
  * @param[in] interval_ms  轮询间隔（毫秒），select 固定 timeout。0 自动修正为 1。
  * @param[in] num_threads  线程池工作线程数，必须 >= 1
  * @return 成功返回定时器指针，失败返回 NULL
  */
-TIMER *timing_create(uint32_t interval_ms, int32_t num_threads)
+TIMING *timing_create(uint32_t interval_ms, int32_t num_threads)
 {
-    TIMER *t = NULL;
+    TIMING *t = NULL;
 
     if (0 >= num_threads)
     {
         return NULL;
     }
 
-    t = calloc(1, sizeof(TIMER));
+    t = calloc(1, sizeof(TIMING));
 
     if (NULL == t)
     {
@@ -255,7 +255,7 @@ TIMER *timing_create(uint32_t interval_ms, int32_t num_threads)
  *
  * @param[in] t 定时器指针，传 NULL 无操作
  */
-void timing_destroy(TIMER *t)
+void timing_destroy(TIMING *t)
 {
     LIST_NODE *node = NULL;
     LIST_NODE *next = NULL;
@@ -294,7 +294,7 @@ void timing_destroy(TIMER *t)
  * @param[in] t 定时器指针
  * @return 正常退出返回 0，t 为 NULL 或 select 出错返回 -1
  */
-int32_t timing_run(TIMER *t)
+int32_t timing_run(TIMING *t)
 {
     struct timeval tv;
     struct timeval timeout;
@@ -338,7 +338,7 @@ int32_t timing_run(TIMER *t)
  * @param[in] t 定时器指针
  * @return 成功返回 0，t 为 NULL 返回 -1
  */
-int32_t timing_stop(TIMER *t)
+int32_t timing_stop(TIMING *t)
 {
     if (NULL == t)
     {
@@ -352,7 +352,7 @@ int32_t timing_stop(TIMER *t)
 /**
  * @brief 添加定时任务
  *
- * 创建 TIMER_TASK，设置 next_ms = now + first_delay_ms，加入链表。
+ * 创建 TIMING_TASK，设置 next_ms = now + first_delay_ms，加入链表。
  *
  * @param[in] t              定时器指针
  * @param[in] first_delay_ms 首次触发延迟（毫秒），0 = 下个 tick 立即触发
@@ -363,21 +363,21 @@ int32_t timing_stop(TIMER *t)
  *
  * @return 成功返回任务句柄，失败返回 NULL
  */
-TIMER_TASK *timing_add(TIMER     *t,
+TIMING_TASK *timing_add(TIMING     *t,
                        uint32_t   first_delay_ms,
                        uint32_t   period_ms,
                        int32_t    count,
                        timer_cb_t cb,
                        void      *arg)
 {
-    TIMER_TASK *task = NULL;
+    TIMING_TASK *task = NULL;
 
     if ((NULL == t) || (NULL == cb))
     {
         return NULL;
     }
 
-    task = calloc(1, sizeof(TIMER_TASK));
+    task = calloc(1, sizeof(TIMING_TASK));
 
     if (NULL == task)
     {
@@ -413,7 +413,7 @@ TIMER_TASK *timing_add(TIMER     *t,
  * @param[in] task 任务句柄
  * @return 成功返回 0，task 为 NULL 或已取消返回 -1
  */
-int32_t timing_cancel(TIMER_TASK *task)
+int32_t timing_cancel(TIMING_TASK *task)
 {
     if ((NULL == task) || (0 != task->cancelled))
     {

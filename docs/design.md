@@ -4,7 +4,7 @@
 
 ```
 ┌──────────────────────────────────────────────┐
-│                    TIMER                      │
+│                    TIMING                      │
 │                                              │
 │  ┌──────────────┐                            │
 │  │   task_list  │  linkedList                │
@@ -28,11 +28,11 @@
 
 ```
 timing_create(50)
-  → calloc(TIMER)
+  → calloc(TIMING)
   → interval_ms = 50, task_list = list_create()
 
 timing_add(t, 5000, 5000, -1, cb, arg)
-  → calloc(TIMER_TASK)
+  → calloc(TIMING_TASK)
   → next_ms = now_ms() + 5000    // CLOCK_MONOTONIC 绝对时间
   → period_ms = 5000, count = -1
   → list_push_back(task_list, task)
@@ -69,7 +69,7 @@ struct _TIMER_TASK_ {
     timer_cb_t cb;              // 8B
     void      *arg;             // 8B
     LIST_NODE *list_node;       // 8B, NULL = 已取出
-    TIMER     *timer;           // 8B, 所属定时器
+    TIMING     *timer;           // 8B, 所属定时器
     uint32_t   period_ms;       // 4B, 触发后 next_ms += period_ms
     int32_t    count;           // 4B, -1=永久, >0 递减
     int8_t     cancelled;       // 1B
@@ -81,13 +81,13 @@ struct _TIMER_TASK_ {
 
 ```c
 /* 生命周期 */
-TIMER *timing_create(uint32_t interval_ms);
-void   timing_destroy(TIMER *t);
-int32_t timing_run(TIMER *t);      /* 阻塞 */
-int32_t timing_stop(TIMER *t);     /* 异步安全 */
+TIMING *timing_create(uint32_t interval_ms);
+void   timing_destroy(TIMING *t);
+int32_t timing_run(TIMING *t);      /* 阻塞 */
+int32_t timing_stop(TIMING *t);     /* 异步安全 */
 
 /* 添加任务 */
-TIMER_TASK *timing_add(TIMER    *t,
+TIMING_TASK *timing_add(TIMING    *t,
                        uint32_t  first_delay_ms,  /* 0=立即 */
                        uint32_t  period_ms,       /* 0=每tick */
                        int32_t   count,           /* -1/1/N */
@@ -95,7 +95,7 @@ TIMER_TASK *timing_add(TIMER    *t,
                        void     *arg);
 
 /* 取消任务 */
-int32_t timing_cancel(TIMER_TASK *task);
+int32_t timing_cancel(TIMING_TASK *task);
 ```
 
 ## 5. 时间模型
@@ -178,7 +178,7 @@ tick N+60:  callback 返回，now=4000
 ## 10. 使用示例
 
 ```c
-TIMER *t = timing_create(50);
+TIMING *t = timing_create(50);
 
 /* 5 秒后首次，之后每 2 秒上报，永久 */
 timing_add(t, 5000, 2000, -1, report_temp, NULL);

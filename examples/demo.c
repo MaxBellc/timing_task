@@ -52,7 +52,7 @@ static void burst_report(void *arg)
 /** @brief 停止定时器 */
 static void stop_cb(void *arg)
 {
-    TIMER *t = (TIMER *) arg;
+    TIMING *t = (TIMING *) arg;
 
     printf("\n--- 演示结束 ---\n");
     timing_stop(t);
@@ -68,7 +68,7 @@ int main(void)
     printf("(select + linkedList + threadPool, 50ms tick)\n\n");
 
     /* 创建定时器 */
-    TIMER *t = timing_create(50, 2);
+    TIMING *t = timing_create(50, 2);
 
     if (NULL == t)
     {

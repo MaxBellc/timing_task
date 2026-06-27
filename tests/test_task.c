@@ -37,7 +37,7 @@
 typedef struct _TASK_TEST_CTX_
 {
     int32_t  fire_count;  /**< 触发次数 */
-    TIMER   *timer;       /**< 定时器指针，用于回调中 stop */
+    TIMING   *timer;       /**< 定时器指针，用于回调中 stop */
 } TASK_TEST_CTX;
 
 /*===========================================================================
@@ -65,7 +65,7 @@ static void stop_cb(void *arg)
  * 取消测试辅助
  *===========================================================================*/
 
-static TIMER_TASK *g_cancel_target = NULL;
+static TIMING_TASK *g_cancel_target = NULL;
 
 /** @brief 取消全局任务并计数 */
 static void cancel_target_cb(void *arg)
@@ -83,7 +83,7 @@ static void cancel_target_cb(void *arg)
 /** @brief 创建和销毁 */
 void test_create_destroy(void)
 {
-    TIMER *timer = timing_create(50, 2);
+    TIMING *timer = timing_create(50, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
     timing_destroy(timer);
@@ -99,7 +99,7 @@ void test_destroy_null(void)
 /** @brief interval_ms=0 自动修正为 1 */
 void test_create_zero_interval(void)
 {
-    TIMER *timer = timing_create(0, 2);
+    TIMING *timer = timing_create(0, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
     timing_destroy(timer);
@@ -113,7 +113,7 @@ void test_create_zero_interval(void)
 void test_count_one(void)
 {
     TASK_TEST_CTX ctx = {0};
-    TIMER        *timer = timing_create(10, 2);
+    TIMING        *timer = timing_create(10, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
     ctx.timer = timer;
@@ -129,7 +129,7 @@ void test_count_one(void)
 /** @brief count=1 + period=0 也只触发一次 */
 void test_count_one_no_repeat(void)
 {
-    TIMER *timer = timing_create(10, 2);
+    TIMING *timer = timing_create(10, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
 
@@ -151,7 +151,7 @@ void test_count_one_no_repeat(void)
 void test_count_n(void)
 {
     TASK_TEST_CTX ctx = {0};
-    TIMER        *timer = timing_create(10, 2);
+    TIMING        *timer = timing_create(10, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
 
@@ -171,7 +171,7 @@ void test_count_n(void)
 void test_count_forever(void)
 {
     TASK_TEST_CTX ctx = {0};
-    TIMER        *timer = timing_create(10, 2);
+    TIMING        *timer = timing_create(10, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
     ctx.timer = timer;
@@ -197,7 +197,7 @@ void test_count_forever(void)
 void test_first_delay_zero(void)
 {
     TASK_TEST_CTX ctx = {0};
-    TIMER        *timer = timing_create(10, 2);
+    TIMING        *timer = timing_create(10, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
     ctx.timer = timer;
@@ -213,7 +213,7 @@ void test_first_delay_zero(void)
 void test_first_delay_positive(void)
 {
     TASK_TEST_CTX ctx = {0};
-    TIMER        *timer = timing_create(10, 2);
+    TIMING        *timer = timing_create(10, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
     ctx.timer = timer;
@@ -231,7 +231,7 @@ void test_first_delay_order(void)
     TASK_TEST_CTX ctx_zero   = {0};
     TASK_TEST_CTX ctx_delay  = {0};
     TASK_TEST_CTX ctx_stop   = {0};
-    TIMER        *timer = timing_create(20, 2);
+    TIMING        *timer = timing_create(20, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
 
@@ -259,7 +259,7 @@ void test_first_delay_order(void)
 void test_period_zero(void)
 {
     TASK_TEST_CTX ctx = {0};
-    TIMER        *timer = timing_create(20, 2);
+    TIMING        *timer = timing_create(20, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
     ctx.timer = timer;
@@ -280,7 +280,7 @@ void test_period_zero(void)
 void test_period_positive(void)
 {
     TASK_TEST_CTX ctx = {0};
-    TIMER        *timer = timing_create(10, 2);
+    TIMING        *timer = timing_create(10, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
     ctx.timer = timer;
@@ -305,12 +305,12 @@ void test_period_positive(void)
 void test_cancel_before_fire(void)
 {
     TASK_TEST_CTX ctx = {0};
-    TIMER        *timer = timing_create(10, 2);
+    TIMING        *timer = timing_create(10, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
 
     /* 注册后立即取消 */
-    TIMER_TASK *task = timing_add(timer, 50, 50, 1, count_cb, &ctx);
+    TIMING_TASK *task = timing_add(timer, 50, 50, 1, count_cb, &ctx);
 
     TEST_ASSERT_NOT_NULL(task);
     TEST_ASSERT_EQUAL(0, timing_cancel(task));
@@ -329,11 +329,11 @@ void test_cancel_before_fire(void)
 /** @brief 重复取消返回 -1 */
 void test_cancel_twice(void)
 {
-    TIMER *timer = timing_create(10, 2);
+    TIMING *timer = timing_create(10, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
 
-    TIMER_TASK *task = timing_add(timer, 100, 100, 1, count_cb, NULL);
+    TIMING_TASK *task = timing_add(timer, 100, 100, 1, count_cb, NULL);
 
     TEST_ASSERT_NOT_NULL(task);
     TEST_ASSERT_EQUAL(0, timing_cancel(task));
@@ -352,7 +352,7 @@ void test_cancel_null(void)
 /** @brief 从其他回调中取消任务 */
 void test_cancel_from_other(void)
 {
-    TIMER        *timer = timing_create(10, 2);
+    TIMING        *timer = timing_create(10, 2);
     TASK_TEST_CTX target_ctx = {0};
     TASK_TEST_CTX cancel_ctx = {0};
     TASK_TEST_CTX stop_ctx   = {0};
@@ -360,7 +360,7 @@ void test_cancel_from_other(void)
     TEST_ASSERT_NOT_NULL(timer);
 
     /* 任务 A: 80ms 后触发，应被取消 */
-    TIMER_TASK *target = timing_add(timer, 80, 80, 1, count_cb, &target_ctx);
+    TIMING_TASK *target = timing_add(timer, 80, 80, 1, count_cb, &target_ctx);
 
     TEST_ASSERT_NOT_NULL(target);
 
@@ -399,7 +399,7 @@ void test_null_timer(void)
 /** @brief NULL 回调参数 */
 void test_null_callback(void)
 {
-    TIMER *timer = timing_create(10, 2);
+    TIMING *timer = timing_create(10, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
     TEST_ASSERT_NULL(
@@ -417,7 +417,7 @@ void test_mixed_counts(void)
     TASK_TEST_CTX ctx_1   = {0};
     TASK_TEST_CTX ctx_4   = {0};
     TASK_TEST_CTX ctx_inf = {0};
-    TIMER        *timer = timing_create(10, 2);
+    TIMING        *timer = timing_create(10, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
 
@@ -446,14 +446,14 @@ void test_mixed_counts(void)
 void test_many_tasks(void)
 {
     int32_t        i     = 0;
-    TIMER         *timer = timing_create(10, 2);
+    TIMING         *timer = timing_create(10, 2);
     TASK_TEST_CTX  ctx   = {0};
 
     TEST_ASSERT_NOT_NULL(timer);
 
     for (i = 0; i < 50; i++)
     {
-        TIMER_TASK *t = timing_add(timer,
+        TIMING_TASK *t = timing_add(timer,
                                    (uint32_t)(50 + i * 2),
                                    (uint32_t)(50 + i * 2),
                                    1,
@@ -478,7 +478,7 @@ void test_many_tasks(void)
 /** @brief stop 后 run 正常返回 */
 void test_stop_returns(void)
 {
-    TIMER *timer = timing_create(10, 2);
+    TIMING *timer = timing_create(10, 2);
 
     TEST_ASSERT_NOT_NULL(timer);
 
@@ -493,7 +493,7 @@ void test_stop_returns(void)
 /** @brief 未 run 直接 destroy 不崩溃 */
 void test_destroy_without_run(void)
 {
-    TIMER        *timer = timing_create(10, 2);
+    TIMING        *timer = timing_create(10, 2);
     TASK_TEST_CTX ctx   = {0};
 
     TEST_ASSERT_NOT_NULL(timer);
