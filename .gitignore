@@ -1,0 +1,15 @@
+# 构建产物
+build/
+
+# AI 辅助
+CLAUDE.md
+.claude/
+memory/
+
+# IDE
+.vscode/
+.idea/
+
+# 系统
+.DS_Store
+Thumbs.db

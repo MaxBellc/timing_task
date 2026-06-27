@@ -1,0 +1,27 @@
+# Doxygen 配置文件
+# 用法: doxygen Doxyfile
+# 输出: docs/html/
+
+PROJECT_NAME           = "timingTask"
+PROJECT_BRIEF          = "嵌入式定时器 — select + linkedList + threadPool"
+PROJECT_VERSION        = 3.0.0
+
+INPUT                  = include/ src/ examples/ tests/ docs/
+RECURSIVE              = YES
+FILE_PATTERNS          = *.h *.c
+
+OUTPUT_DIRECTORY       = docs
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+
+OPTIMIZE_OUTPUT_FOR_C  = YES
+EXTRACT_STATIC         = YES
+EXTRACT_ALL            = YES
+SORT_MEMBER_DOCS       = YES
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+
+# 中文支持（需要系统有中文字体）
+USE_MATHJAX            = NO
+GENERATE_TREEVIEW      = YES
